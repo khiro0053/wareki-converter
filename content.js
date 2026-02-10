@@ -90,7 +90,7 @@ document.addEventListener('mouseup', async (e) => {
 
     if (response.success) {
       // OCR処理結果を表示
-      handleOCRResult(response.result, rect);
+      handleOCRResult(response.result, rect, response.ocrText || '');
     } else {
       showTooltip(rect, 'エラー: ' + response.error, false);
     }
@@ -134,7 +134,7 @@ function showTooltip(rect, text, isLoading) {
   }
 }
 
-function handleOCRResult(result, rect) {
+function handleOCRResult(result, rect, ocrText) {
   if (result && result.converted) {
     const displayText = `${result.original} → ${result.converted}`;
     showTooltip(rect, displayText, false);
@@ -144,7 +144,9 @@ function handleOCRResult(result, rect) {
       console.error('クリップボードコピー失敗:', err);
     });
   } else {
-    showTooltip(rect, '和暦が見つかりませんでした', false);
+    const preview = (ocrText || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const suffix = preview ? ` (OCR: ${preview})` : '';
+    showTooltip(rect, `和暦が見つかりませんでした${suffix}`, false);
   }
 }
 

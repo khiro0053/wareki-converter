@@ -1,7 +1,12 @@
 // Tesseract.jsによるOCR処理
 
-// Tesseract.jsの初期化（CDNから読み込み）
+// Tesseract.jsの初期化
 let tesseractReady = false;
+let workerPromise = null;
+
+function isBenignTesseractWarning(err) {
+  return String(err).includes('Parameter not found');
+}
 
 async function initTesseract() {
   if (tesseractReady) return;
@@ -19,6 +24,25 @@ async function initTesseract() {
   }
 }
 
+async function getOCRWorker() {
+  if (workerPromise) return workerPromise;
+
+  workerPromise = Tesseract.createWorker('jpn+eng', 1, {
+    workerPath: chrome.runtime.getURL('lib/worker-wrapper.js'),
+    corePath: chrome.runtime.getURL('lib'),
+    // 学習データは projectnaptha から取得（gzip有効）
+    langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+    workerBlobURL: false,
+    logger: () => {},
+    errorHandler: err => {
+      if (isBenignTesseractWarning(err)) return;
+      console.error(err);
+    }
+  });
+
+  return workerPromise;
+}
+
 /**
  * 画像からOCRで和暦を抽出
  * @param {string} imageDataUrl - base64エンコードされた画像
@@ -28,27 +52,24 @@ async function performOCR(imageDataUrl) {
   await initTesseract();
 
   try {
+    const worker = await getOCRWorker();
+
     // 画像前処理
     const processedImage = await preprocessImage(imageDataUrl);
+    const sources = [processedImage, imageDataUrl];
+    let lastText = '';
+    let converted = null;
 
-    // Tesseract.jsでOCR実行
-    // 日本語と英語の両方を認識（漢字と略記の両対応）
-    // 注: Workerを使用しない（0）モードでOffscreen Documentで実行
-    const worker = await Tesseract.createWorker('jpn+eng', 0, {
-      logger: m => console.log(m), // 進捗ログ
-      errorHandler: err => console.error(err)
-    });
-
-    const { data: { text } } = await worker.recognize(processedImage);
-    await worker.terminate();
-
-    console.log('OCR Result:', text);
-
-    // 和暦変換を試行
-    const converted = convertWarekiToSeireki(text);
+    for (const source of sources) {
+      const { data: { text } } = await worker.recognize(source);
+      lastText = text || '';
+      console.log('OCR Result:', lastText);
+      converted = convertWarekiToSeireki(lastText);
+      if (converted) break;
+    }
 
     return {
-      ocrText: text,
+      ocrText: lastText,
       converted: converted,
       success: true
     };

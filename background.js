@@ -60,7 +60,8 @@ async function handleScreenshotCapture(message, tabId) {
 
     return {
       success: true,
-      result: ocrResult.converted
+      result: ocrResult.converted,
+      ocrText: ocrResult.ocrText || ''
     };
 
   } catch (error) {

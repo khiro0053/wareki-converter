@@ -8,20 +8,20 @@ const GENGO_MAP = {
   '明治': { start: 1868, abbr: 'M' }
 };
 
-// 和暦パターンの正規表現
-const WAREKI_PATTERNS = [
-  // 漢字表記: 令和5年12月31日
-  /([令平昭大明][和成正治])(\d{1,2}|元)年(\d{1,2})月(\d{1,2})日/,
+const KANJI_FULL_DATE = /(令和|平成|昭和|大正|明治)(\d{1,2}|元)年?(\d{1,2})月(\d{1,2})日?/;
+const KANJI_YEAR_ONLY = /(令和|平成|昭和|大正|明治)(\d{1,2}|元)年?/;
+const ABBR_FULL_DATE = /([RHSTM])(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{1,2})/;
+const ABBR_YEAR_MONTH = /([RHSTM])(\d{1,2})[.\-/](\d{1,2})/;
+const ABBR_YEAR_ONLY = /([RHSTM])(\d{1,2})/;
 
-  // 漢字表記（年のみ）: 令和5年
-  /([令平昭大明][和成正治])(\d{1,2}|元)年/,
-
-  // 略記表記: R5.12.31
-  /([RHSTM])(\d{1,2})\.(\d{1,2})\.(\d{1,2})/,
-
-  // 略記表記（年のみ）: R5
-  /([RHSTM])(\d{1,2})/
-];
+function normalizeWarekiText(text) {
+  return text
+    .normalize('NFKC')
+    .replace(/\s+/g, '')
+    .replace(/[．。]/g, '.')
+    .replace(/[‐‑‒–—―ー]/g, '-')
+    .toUpperCase();
+}
 
 /**
  * 和暦テキストから西暦に変換
@@ -31,44 +31,81 @@ const WAREKI_PATTERNS = [
 function convertWarekiToSeireki(text) {
   if (!text) return null;
 
-  // 各パターンを試行
-  for (const pattern of WAREKI_PATTERNS) {
-    const match = text.match(pattern);
-    if (!match) continue;
+  const normalizedText = normalizeWarekiText(text);
 
-    const result = parseWarekiMatch(match);
-    if (result) {
-      return result;
-    }
+  // 漢字フル日付
+  let match = normalizedText.match(KANJI_FULL_DATE);
+  if (match) {
+    return buildResult(
+      match[1],
+      match[2] === '元' ? 1 : parseInt(match[2], 10),
+      parseInt(match[3], 10),
+      parseInt(match[4], 10),
+      match[0]
+    );
+  }
+
+  // 漢字年のみ
+  match = normalizedText.match(KANJI_YEAR_ONLY);
+  if (match) {
+    return buildResult(
+      match[1],
+      match[2] === '元' ? 1 : parseInt(match[2], 10),
+      null,
+      null,
+      match[0]
+    );
+  }
+
+  // 略記フル日付
+  match = normalizedText.match(ABBR_FULL_DATE);
+  if (match) {
+    const gengoName = Object.keys(GENGO_MAP).find(
+      key => GENGO_MAP[key].abbr === match[1]
+    );
+    return buildResult(
+      gengoName,
+      parseInt(match[2], 10),
+      parseInt(match[3], 10),
+      parseInt(match[4], 10),
+      match[0]
+    );
+  }
+
+  // 略記年+月
+  match = normalizedText.match(ABBR_YEAR_MONTH);
+  if (match) {
+    const gengoName = Object.keys(GENGO_MAP).find(
+      key => GENGO_MAP[key].abbr === match[1]
+    );
+    return buildResult(
+      gengoName,
+      parseInt(match[2], 10),
+      parseInt(match[3], 10),
+      null,
+      match[0]
+    );
+  }
+
+  // 略記年のみ
+  match = normalizedText.match(ABBR_YEAR_ONLY);
+  if (match) {
+    const gengoName = Object.keys(GENGO_MAP).find(
+      key => GENGO_MAP[key].abbr === match[1]
+    );
+    return buildResult(
+      gengoName,
+      parseInt(match[2], 10),
+      null,
+      null,
+      match[0]
+    );
   }
 
   return null;
 }
 
-function parseWarekiMatch(match) {
-  let gengoName = null;
-  let year = null;
-  let month = null;
-  let day = null;
-
-  // パターン1,2: 漢字表記
-  if (match[1] && match[1].length === 2) {
-    gengoName = match[1];
-    year = match[2] === '元' ? 1 : parseInt(match[2], 10);
-    month = match[3] ? parseInt(match[3], 10) : null;
-    day = match[4] ? parseInt(match[4], 10) : null;
-  }
-  // パターン3,4: 略記表記
-  else if (match[1] && match[1].length === 1) {
-    const abbr = match[1];
-    gengoName = Object.keys(GENGO_MAP).find(
-      key => GENGO_MAP[key].abbr === abbr
-    );
-    year = parseInt(match[2], 10);
-    month = match[3] ? parseInt(match[3], 10) : null;
-    day = match[4] ? parseInt(match[4], 10) : null;
-  }
-
+function buildResult(gengoName, year, month, day, original) {
   if (!gengoName || !GENGO_MAP[gengoName]) {
     return null;
   }
@@ -79,6 +116,9 @@ function parseWarekiMatch(match) {
 
   // 元号の範囲チェック
   if (!isValidWareki(gengoName, year)) {
+    return null;
+  }
+  if (!isValidMonthDay(month, day)) {
     return null;
   }
 
@@ -93,13 +133,20 @@ function parseWarekiMatch(match) {
   }
 
   return {
-    original: match[0],
+    original: original,
     converted: converted,
     year: seirekiYear,
     month: month,
     day: day,
     gengo: gengoName
   };
+}
+
+function isValidMonthDay(month, day) {
+  if (month == null && day == null) return true;
+  if (month == null || month < 1 || month > 12) return false;
+  if (day == null) return true;
+  return day >= 1 && day <= 31;
 }
 
 function isValidWareki(gengoName, year) {
