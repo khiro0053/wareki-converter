@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>和暦変換履歴</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="sidepanel-container">
+    <header class="sidepanel-header">
+      <h1>和暦変換履歴</h1>
+      <button id="clearHistory" class="btn-clear">履歴をクリア</button>
+    </header>
+
+    <div class="sidepanel-content">
+      <div id="historyList" class="history-list">
+        <!-- 履歴アイテムが動的に追加される -->
+      </div>
+
+      <div id="emptyState" class="empty-state">
+        <p>まだ変換履歴がありません</p>
+        <p class="hint">Altキーを押しながら和暦をドラッグ選択してください</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="converter.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

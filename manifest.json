@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "和暦⇔西暦変換",
+  "version": "1.0.0",
+  "description": "画像から和暦を読み取り、西暦に自動変換するChrome拡張機能",
+
+  "permissions": [
+    "activeTab",
+    "clipboardWrite",
+    "scripting",
+    "sidePanel",
+    "offscreen"
+  ],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["converter.js", "content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
