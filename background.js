@@ -41,17 +41,10 @@ async function handleScreenshotCapture(message, tabId) {
       format: 'png'
     });
 
-    // 2. 選択範囲をクロッピング
-    const croppedImage = await cropImage(
-      screenshotUrl,
-      message.rect,
-      message.viewport
-    );
+    // 2. OCR処理を実行（Offscreen Documentでクロッピングも実行）
+    const ocrResult = await executeOCR(screenshotUrl, message.rect, message.viewport);
 
-    // 3. OCR処理を実行（Offscreen Documentを使用）
-    const ocrResult = await executeOCR(croppedImage);
-
-    // 4. 履歴に追加
+    // 3. 履歴に追加
     if (ocrResult.converted) {
       const tab = await chrome.tabs.get(tabId);
       addToHistory({
@@ -77,46 +70,9 @@ async function handleScreenshotCapture(message, tabId) {
 }
 
 /**
- * 画像をクロッピング
- */
-async function cropImage(imageDataUrl, rect, viewport) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = new OffscreenCanvas(
-        rect.width * viewport.devicePixelRatio,
-        rect.height * viewport.devicePixelRatio
-      );
-      const ctx = canvas.getContext('2d');
-
-      // スクロール位置とデバイスピクセル比を考慮
-      const sourceX = (rect.left - viewport.scrollX) * viewport.devicePixelRatio;
-      const sourceY = (rect.top - viewport.scrollY) * viewport.devicePixelRatio;
-      const sourceWidth = rect.width * viewport.devicePixelRatio;
-      const sourceHeight = rect.height * viewport.devicePixelRatio;
-
-      ctx.drawImage(
-        img,
-        sourceX, sourceY, sourceWidth, sourceHeight,
-        0, 0, canvas.width, canvas.height
-      );
-
-      canvas.convertToBlob().then(blob => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    };
-    img.onerror = reject;
-    img.src = imageDataUrl;
-  });
-}
-
-/**
  * OCR処理を実行（Offscreen Documentで実行）
  */
-async function executeOCR(imageDataUrl) {
+async function executeOCR(screenshotUrl, rect, viewport) {
   // Offscreen Document APIを使用してTesseract.jsを実行
   // （Service WorkerではDOM APIが使えないため）
 
@@ -135,10 +91,12 @@ async function executeOCR(imageDataUrl) {
       });
     }
 
-    // OCR処理をOffscreen documentに依頼
+    // OCR処理をOffscreen documentに依頼（クロッピング情報も渡す）
     const result = await chrome.runtime.sendMessage({
       type: 'PERFORM_OCR',
-      imageDataUrl: imageDataUrl
+      screenshotUrl: screenshotUrl,
+      rect: rect,
+      viewport: viewport
     });
 
     return result;
