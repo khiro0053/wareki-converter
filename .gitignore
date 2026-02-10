@@ -1,0 +1,21 @@
+# Node modules (npm使用時)
+node_modules/
+
+# ビルド成果物
+dist/
+build/
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+
+# エディタ設定
+.vscode/
+.idea/
+
+# 一時ファイル
+*.log
+*.tmp
+
+# 個人設定（必要に応じて）
+config.local.json
