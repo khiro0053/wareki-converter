@@ -34,6 +34,7 @@ async function performOCR(imageDataUrl) {
     // Tesseract.jsでOCR実行
     // 日本語と英語の両方を認識（漢字と略記の両対応）
     const worker = await Tesseract.createWorker('jpn+eng', 1, {
+      workerPath: chrome.runtime.getURL('lib/worker.min.js'),
       logger: m => console.log(m), // 進捗ログ
       errorHandler: err => console.error(err)
     });
