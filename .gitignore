@@ -1,5 +1,6 @@
 # Node modules (npm使用時)
 node_modules/
+package-lock.json
 
 # ビルド成果物
 dist/

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>和暦変換テストページ</title>
+  <style>
+    body {
+      padding: 50px;
+      font-size: 24px;
+      line-height: 2;
+      font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    }
+    h1 {
+      color: #4285f4;
+      margin-bottom: 30px;
+    }
+    .test-case {
+      margin: 20px 0;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+    .test-case strong {
+      color: #333;
+      display: inline-block;
+      width: 150px;
+    }
+    .instructions {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .instructions h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #856404;
+    }
+    .instructions ol {
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>和暦変換テストページ</h1>
+
+  <div class="instructions">
+    <h2>使い方</h2>
+    <ol>
+      <li>Altキーを押したままにする（カーソルが十字に変わります）</li>
+      <li>下のテストケースをマウスでドラッグ選択</li>
+      <li>マウスを離すとOCR処理が開始されます</li>
+      <li>変換結果がツールチップとクリップボードに表示されます</li>
+    </ol>
+  </div>
+
+  <div class="test-case">
+    <strong>漢字表記:</strong> 令和5年12月31日
+  </div>
+
+  <div class="test-case">
+    <strong>略記表記:</strong> R5.12.31
+  </div>
+
+  <div class="test-case">
+    <strong>平成:</strong> 平成31年4月30日
+  </div>
+
+  <div class="test-case">
+    <strong>昭和:</strong> 昭和64年1月7日
+  </div>
+
+  <div class="test-case">
+    <strong>元年:</strong> 令和元年5月1日
+  </div>
+
+  <div class="test-case">
+    <strong>年のみ:</strong> 平成20年
+  </div>
+
+  <div class="test-case">
+    <strong>大正:</strong> 大正15年12月25日
+  </div>
+
+  <div class="test-case">
+    <strong>明治:</strong> 明治45年7月30日
+  </div>
+
+  <div class="test-case">
+    <strong>複数の和暦:</strong> 昭和39年10月10日から令和3年7月23日
+  </div>
+</body>
+</html>

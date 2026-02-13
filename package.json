@@ -1,0 +1,24 @@
+{
+  "name": "wareki-converter",
+  "version": "1.0.0",
+  "description": "画像から和暦を読み取り、西暦に自動変換するChrome拡張機能です。",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khiro0053/wareki-converter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/khiro0053/wareki-converter/issues"
+  },
+  "homepage": "https://github.com/khiro0053/wareki-converter#readme",
+  "dependencies": {
+    "tesseract.js": "^7.0.0"
+  }
+}

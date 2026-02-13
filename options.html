@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - 和暦⇔西暦変換</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="container">
+    <h1>和暦⇔西暦変換 設定</h1>
+    <p class="description">Google Vision API キーを保存すると、ローカルOCR失敗時にフォールバックします。</p>
+
+    <section class="card">
+      <h2>Google Vision API</h2>
+      <label for="apiKey">APIキー</label>
+      <input id="apiKey" type="password" placeholder="AIza..." autocomplete="off">
+      <div class="actions">
+        <button id="toggleVisibility" type="button">表示</button>
+        <button id="saveKey" type="button" class="primary">保存</button>
+        <button id="deleteKey" type="button" class="danger">キー削除</button>
+      </div>
+      <p id="keyStatus" class="status"></p>
+      <p id="message" class="message"></p>
+      <p class="status">APIキーは各ユーザーが自身で設定してください。開発者キーは配布されません。</p>
+      <p class="status">キーはこの端末の拡張ストレージに保存され、Vision利用はローカルOCR失敗時のみ実行されます。</p>
+    </section>
+
+    <section class="card">
+      <h2>利用状況</h2>
+      <p id="usageLabel">今月のVision利用: - / 200</p>
+      <div class="actions">
+        <button id="refreshUsage" type="button">再読み込み</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>
