@@ -6,6 +6,16 @@ let conversionHistory = [];
 // インストール時の初期化
 chrome.runtime.onInstalled.addListener(() => {
   console.log('和暦⇔西暦変換拡張機能がインストールされました');
+  reinjectContentScripts().catch((error) => {
+    console.warn('Failed to reinject content scripts on install:', error);
+  });
+});
+
+// ブラウザ起動時にも既存タブへの再注入を試みる
+chrome.runtime.onStartup.addListener(() => {
+  reinjectContentScripts().catch((error) => {
+    console.warn('Failed to reinject content scripts on startup:', error);
+  });
 });
 
 // Content Scriptからのメッセージ処理
@@ -27,6 +37,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'CLEAR_HISTORY') {
     conversionHistory = [];
     sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'STORAGE_GET') {
+    chrome.storage.local.get(message.keys || null, (result) => {
+      sendResponse({ success: true, result });
+    });
+    return true;
+  }
+
+  if (message.type === 'STORAGE_SET') {
+    chrome.storage.local.set(message.items || {}, () => {
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+
+  if (message.type === 'STORAGE_REMOVE') {
+    chrome.storage.local.remove(message.keys || [], () => {
+      sendResponse({ success: true });
+    });
     return true;
   }
 });
@@ -123,4 +154,39 @@ function notifySidePanel() {
   }).catch(() => {
     // サイドパネルが開いていない場合は無視
   });
+}
+
+/**
+ * 既存タブにコンテンツスクリプトを再注入
+ * 拡張リロード後の "Extension context invalidated" 対策
+ */
+async function reinjectContentScripts() {
+  const tabs = await chrome.tabs.query({});
+
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url) continue;
+
+    // 標準の制限ページは対象外
+    if (
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('edge://') ||
+      tab.url.startsWith('about:') ||
+      tab.url.startsWith('chrome-extension://')
+    ) {
+      continue;
+    }
+
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['converter.js', 'content.js']
+      });
+      await chrome.scripting.insertCSS({
+        target: { tabId: tab.id },
+        files: ['styles.css']
+      });
+    } catch {
+      // 注入できないタブ（権限なし等）は無視
+    }
+  }
 }

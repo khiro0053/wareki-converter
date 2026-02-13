@@ -9,7 +9,8 @@
     "clipboardWrite",
     "scripting",
     "sidePanel",
-    "offscreen"
+    "offscreen",
+    "storage"
   ],
 
   "host_permissions": [
@@ -36,6 +37,8 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
+
+  "options_page": "options.html",
 
   "web_accessible_resources": [
     {

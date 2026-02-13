@@ -8,19 +8,36 @@ const GENGO_MAP = {
   '明治': { start: 1868, abbr: 'M' }
 };
 
-const KANJI_FULL_DATE = /(令和|平成|昭和|大正|明治)(\d{1,2}|元)年?(\d{1,2})月(\d{1,2})日?/;
-const KANJI_YEAR_ONLY = /(令和|平成|昭和|大正|明治)(\d{1,2}|元)年?/;
+const KANJI_FULL_DATE = /(令和|平成|昭和|大正|明治)([0-9〇零一二三四五六七八九十元]{1,4})年?([0-9〇零一二三四五六七八九十]{1,3})月([0-9〇零一二三四五六七八九十]{1,3})日?/;
+const KANJI_YEAR_ONLY = /(令和|平成|昭和|大正|明治)([0-9〇零一二三四五六七八九十元]{1,4})年?/;
 const ABBR_FULL_DATE = /([RHSTM])(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{1,2})/;
 const ABBR_YEAR_MONTH = /([RHSTM])(\d{1,2})[.\-/](\d{1,2})/;
 const ABBR_YEAR_ONLY = /([RHSTM])(\d{1,2})/;
 
 function normalizeWarekiText(text) {
-  return text
+  let normalized = text
     .normalize('NFKC')
     .replace(/\s+/g, '')
     .replace(/[．。]/g, '.')
     .replace(/[‐‑‒–—―ー]/g, '-')
     .toUpperCase();
+
+  // 和暦で頻出するOCRの取り違えを軽く補正
+  normalized = normalized
+    .replace(/今和/g, '令和')
+    .replace(/伶和/g, '令和')
+    .replace(/平戌/g, '平成')
+    .replace(/平或/g, '平成')
+    .replace(/昭相/g, '昭和')
+    .replace(/大止/g, '大正')
+    .replace(/明台/g, '明治')
+    .replace(/R(?=[.\-/]?\d)/g, 'R')
+    .replace(/H(?=[.\-/]?\d)/g, 'H')
+    .replace(/S(?=[.\-/]?\d)/g, 'S')
+    .replace(/T(?=[.\-/]?\d)/g, 'T')
+    .replace(/M(?=[.\-/]?\d)/g, 'M');
+
+  return normalized;
 }
 
 /**
@@ -36,11 +53,15 @@ function convertWarekiToSeireki(text) {
   // 漢字フル日付
   let match = normalizedText.match(KANJI_FULL_DATE);
   if (match) {
+    const year = parseWarekiNumber(match[2]);
+    const month = parseWarekiNumber(match[3]);
+    const day = parseWarekiNumber(match[4]);
+    if (year == null || month == null || day == null) return null;
     return buildResult(
       match[1],
-      match[2] === '元' ? 1 : parseInt(match[2], 10),
-      parseInt(match[3], 10),
-      parseInt(match[4], 10),
+      year,
+      month,
+      day,
       match[0]
     );
   }
@@ -48,9 +69,11 @@ function convertWarekiToSeireki(text) {
   // 漢字年のみ
   match = normalizedText.match(KANJI_YEAR_ONLY);
   if (match) {
+    const year = parseWarekiNumber(match[2]);
+    if (year == null) return null;
     return buildResult(
       match[1],
-      match[2] === '元' ? 1 : parseInt(match[2], 10),
+      year,
       null,
       null,
       match[0]
@@ -125,11 +148,11 @@ function buildResult(gengoName, year, month, day, original) {
   // 結果を構築
   let converted;
   if (month && day) {
-    converted = `${seirekiYear}年${month}月${day}日`;
+    converted = `${seirekiYear}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
   } else if (month) {
-    converted = `${seirekiYear}年${month}月`;
+    converted = `${seirekiYear}/${String(month).padStart(2, '0')}`;
   } else {
-    converted = `${seirekiYear}年`;
+    converted = `${seirekiYear}`;
   }
 
   return {
@@ -140,6 +163,48 @@ function buildResult(gengoName, year, month, day, original) {
     day: day,
     gengo: gengoName
   };
+}
+
+function parseWarekiNumber(token) {
+  if (!token) return null;
+  if (token === '元') return 1;
+
+  if (/^\d+$/.test(token)) {
+    const value = parseInt(token, 10);
+    return Number.isNaN(value) ? null : value;
+  }
+
+  const normalized = token.replace(/[〇零]/g, '〇');
+  const digitMap = {
+    '〇': 0,
+    '一': 1,
+    '二': 2,
+    '三': 3,
+    '四': 4,
+    '五': 5,
+    '六': 6,
+    '七': 7,
+    '八': 8,
+    '九': 9
+  };
+
+  if (normalized === '十') return 10;
+  if (normalized.includes('十')) {
+    const [tensPart, onesPart] = normalized.split('十');
+    const tens = tensPart ? digitMap[tensPart] : 1;
+    if (tens == null) return null;
+    if (!onesPart) return tens * 10;
+    const ones = digitMap[onesPart];
+    if (ones == null) return null;
+    return tens * 10 + ones;
+  }
+
+  // 十を含まない漢数字は1桁のみ許容
+  if (normalized.length === 1 && digitMap[normalized] != null) {
+    return digitMap[normalized];
+  }
+
+  return null;
 }
 
 function isValidMonthDay(month, day) {

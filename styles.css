@@ -1,16 +1,3 @@
-/* 共通スタイル */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
 /* Content Script用スタイル */
 .wareki-selection-box {
   position: absolute;
@@ -31,6 +18,9 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
   animation: fadeIn 0.2s ease-in;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .wareki-tooltip.loading::after {
@@ -45,6 +35,34 @@ body {
   animation: spin 0.8s linear infinite;
 }
 
+.wareki-tooltip-close {
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+
+.wareki-tooltip-close:hover {
+  opacity: 0.8;
+}
+
+.wareki-tooltip-copy {
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.wareki-tooltip-copy:hover {
+  opacity: 0.8;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
@@ -55,6 +73,17 @@ body {
 }
 
 /* サイドパネル用スタイル */
+.wareki-sidepanel {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.wareki-sidepanel * {
+  box-sizing: border-box;
+}
+
 .sidepanel-container {
   width: 100%;
   height: 100vh;
